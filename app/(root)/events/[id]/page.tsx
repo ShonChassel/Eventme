@@ -1,14 +1,18 @@
-import { getEventById } from "@/lib/actions/event.actions";
+import Collection from "@/components/shared/Collection";
+import { getEventById, getRelatedEventsByCategory } from "@/lib/actions/event.actions";
 import { formatDateTime } from "@/lib/utils";
 import { SearchParamProps } from "@/types";
 import Image from "next/image";
 import React from "react";
 
-const EventDetails = async ({
-  params: { id },
-  searchParams,
-}: SearchParamProps) => {
+const EventDetails = async ({ params: { id }, searchParams,}: SearchParamProps) => {
   const event = await getEventById(id);
+
+  const relatedEvents = await getRelatedEventsByCategory({
+    categoryId: event.category._id,
+    eventId: event._id,
+    page: searchParams.page as string,
+  })
 
   return (
     <>
@@ -77,13 +81,28 @@ const EventDetails = async ({
             </div>
 
             <div className="flex flex-col gap-2">
-            <p className="p-bold-20 text-grey-600">What You'll Learn:</p>
-            <p className="p-medium-16 lg:p-regular-18">{event.description}</p>
-            <p className="p-medium-16 lg:p-regular-18 truncate text-primary-500 underline">{event.url}</p>
-          </div>
-
+              <p className="p-bold-20 text-grey-600">What You'll Learn:</p>
+              <p className="p-medium-16 lg:p-regular-18">{event.description}</p>
+              <p className="p-medium-16 lg:p-regular-18 truncate text-primary-500 underline">
+                {event.url}
+              </p>
+            </div>
           </div>
         </div>
+      </section>
+
+{/* EVENTS with the same category */}
+      <section className="wrapper my-8 flex flex-col gap-8 md:gap-12">
+        <h2 className="h2-bold">Related Events</h2>
+        <Collection
+          data={relatedEvents?.data}
+          emptyTitle="No Events Found"
+          emptyStateSubtext="Come back later"
+          collectionType="All_Events"
+          limit={3}
+          page={searchParams.page as string}
+          totalPages={relatedEvents?.totalPages}
+        />
       </section>
     </>
   );
